@@ -46,7 +46,7 @@ export function Layout() {
             <Route className="h-4 w-4" />
           </div>
           <div>
-            <div className="text-sm font-semibold tracking-tight">SU8 Egress</div>
+            <div className="text-sm font-semibold tracking-tight">Egress</div>
             <div className="text-[11px] text-muted-foreground">Control Plane</div>
           </div>
         </div>

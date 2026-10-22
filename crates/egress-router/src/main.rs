@@ -34,7 +34,7 @@ use tokio_rustls::TlsConnector;
 use tracing::{debug, info, warn};
 
 #[derive(Debug, Parser)]
-#[command(name = "su8-egress-router")]
+#[command(name = "egress-router")]
 struct Args {
     #[arg(long, default_value = "config.toml")]
     config: PathBuf,
@@ -655,35 +655,35 @@ impl Metrics {
         let registry = Registry::new();
         let node_healthy = IntGaugeVec::new(
             Opts::new(
-                "su8_egress_router_node_healthy",
+                "egress_router_node_healthy",
                 "Egress node health (1 healthy, 0 unhealthy)",
             ),
             &["line", "node"],
         )?;
         let node_active = IntGaugeVec::new(
             Opts::new(
-                "su8_egress_router_node_active_connections",
+                "egress_router_node_active_connections",
                 "Active tunnels per egress node",
             ),
             &["line", "node"],
         )?;
         let connects = IntCounterVec::new(
             Opts::new(
-                "su8_egress_router_connect_total",
+                "egress_router_connect_total",
                 "CONNECT attempts through the router",
             ),
             &["line", "node", "result"],
         )?;
         let connect_seconds = HistogramVec::new(
             HistogramOpts::new(
-                "su8_egress_router_connect_seconds",
+                "egress_router_connect_seconds",
                 "Time to establish a node tunnel",
             ),
             &["line"],
         )?;
         let bytes = IntCounterVec::new(
             Opts::new(
-                "su8_egress_router_bytes_total",
+                "egress_router_bytes_total",
                 "Bytes forwarded through the router",
             ),
             &["line", "node", "direction"],

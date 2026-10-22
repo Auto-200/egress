@@ -1,7 +1,7 @@
 # 控制面
 
-控制面在本仓库内，不进入 SU8。SU8 只是消费者：管理端保存一个代理地址，
-gateway 通过现有 `channel_members.egress` 使用它。
+控制面在本仓库内，独立于任何业务系统。消费者只需保存一个代理地址，
+把它配置进自己使用的 HTTP 客户端即可。
 
 实现位置：`crates/egress-control`（API + 静态管理端）、`web/`（shadcn/ui 管理端）。
 
@@ -64,7 +64,7 @@ migration：`crates/egress-control/migrations/0001_init.sql`
 - 每个消费者拿到一个 line 的代理地址，例如：
   - 集群内：`http://egress-router.egress.svc:3128`
   - 公网：`https://hk-egress.example.com:443`
-- SU8：在 `channel_members.egress` 里保存该地址；不需要知道线路/节点/transport。
+- 消费者：保存该地址并在出站 HTTP 客户端里启用它；不需要知道线路/节点/transport。
 - 多消费者隔离：不同 line 或不同的 router Service；后续可加 Basic Auth / 每消费者 token。
 
 ## 尚未实现

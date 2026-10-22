@@ -3,9 +3,9 @@ line = "hk"
 connect_timeout_secs = 10
 
 [tls]
-ca = "/etc/su8-egress/ca.crt"
-client_cert = "/etc/su8-egress/router.crt"
-client_key = "/etc/su8-egress/router.key"
+ca = "/etc/egress/ca.crt"
+client_cert = "/etc/egress/router.crt"
+client_key = "/etc/egress/router.key"
 
 [health]
 interval_secs = 5

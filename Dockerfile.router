@@ -6,5 +6,5 @@ RUN cargo build --release -p egress-router
 
 FROM debian:bookworm-slim
 RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
-COPY --from=build /app/target/release/su8-egress-router /usr/local/bin/su8-egress-router
-ENTRYPOINT ["/usr/local/bin/su8-egress-router", "--config", "/etc/su8-egress/config.toml"]
+COPY --from=build /app/target/release/egress-router /usr/local/bin/egress-router
+ENTRYPOINT ["/usr/local/bin/egress-router", "--config", "/etc/egress/config.toml"]

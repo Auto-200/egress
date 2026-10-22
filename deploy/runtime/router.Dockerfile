@@ -5,7 +5,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-COPY su8-egress-router /usr/local/bin/su8-egress-router
+COPY egress-router /usr/local/bin/egress-router
 
 EXPOSE 3128
-ENTRYPOINT ["/usr/local/bin/su8-egress-router", "--config", "/etc/su8-egress/config.toml"]
+ENTRYPOINT ["/usr/local/bin/egress-router", "--config", "/etc/egress/config.toml"]

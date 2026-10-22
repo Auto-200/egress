@@ -1,10 +1,10 @@
 # 协议与失败语义
 
-## 1. Router ↔ 消费者（SU8 gateway）
+## 1. Router ↔ 消费者
 
 - 监听：集群内 `:3128`，纯 HTTP（不对外暴露）。
 - 方法：`CONNECT host:port HTTP/1.1`。
-- 认证：集群内 NetworkPolicy + 只允许 gateway/api 命名空间；首期不做代理层用户名密码。
+- 认证：集群内 NetworkPolicy 只放行消费者所在命名空间/Pod；如需代理层用户名密码后续再加。
 - 成功：`200` 后进入双向字节转发。
 - 失败：
   - 无健康节点：`503`。
@@ -32,21 +32,21 @@
 - `GET /livez`（TLS + mTLS）：只检查进程，始终 `200 ok`。
 - `GET /healthz`（TLS + mTLS）：进程与监听正常、且 ACL 非空返回 `200 ok`；ACL 为空返回 `503`。
 - `GET /metrics`：Prometheus 文本格式。
-  - `su8_egress_node_active_connections`
-  - `su8_egress_node_connect_total{result="ok|denied|upstream_error"}`
-  - `su8_egress_node_upstream_connect_seconds`
-  - `su8_egress_node_bytes_total{direction="up|down"}`
+  - `egress_node_active_connections`
+  - `egress_node_connect_total{result="ok|denied|upstream_error"}`
+  - `egress_node_upstream_connect_seconds`
+  - `egress_node_bytes_total{direction="up|down"}`
 
 ### Router
 
 - `GET /livez`：只检查进程，始终 `200 ok`。
 - `GET /healthz`：至少一个节点健康返回 `200`，否则 `503`。
 - `GET /metrics`：
-  - `su8_egress_router_node_healthy{line,node}` 0/1
-  - `su8_egress_router_node_active_connections{line,node}`
-  - `su8_egress_router_connect_total{line,node,result}`
-  - `su8_egress_router_connect_seconds{line}`
-  - `su8_egress_router_bytes_total{line,node,direction}`
+  - `egress_router_node_healthy{line,node}` 0/1
+  - `egress_router_node_active_connections{line,node}`
+  - `egress_router_connect_total{line,node,result}`
+  - `egress_router_connect_seconds{line}`
+  - `egress_router_bytes_total{line,node,direction}`
 
 ## 4. 健康检查
 
@@ -62,7 +62,7 @@
 
 - router → node：`connect_timeout_secs`（默认 10s）。
 - node → 目标：`connect_timeout_secs`（默认 10s）。
-- 流式请求没有额外的空闲超时；由 gateway 的首包/总超时控制。
+- 流式请求没有额外的空闲超时；由消费者的首包/总超时控制。
 
 ## 6. 控制面模式
 

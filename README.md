@@ -1,15 +1,15 @@
-# su8-egress
+# egress
 
-独立的多地区出口网络。项目完全在本仓库开发；SU8 只是它的一个消费者，通过现有的
-`channel_members.egress`（HTTP / HTTPS / SOCKS 代理地址）接入，不需要改 SU8 的 gateway 代码。
+独立的多地区出口网络（self-hosted egress fabric）：控制面 + 管理端 + router + 地区节点。
+任何支持 HTTP CONNECT 代理的客户端都能接入——把它的代理地址指向 router 即可，
+客户端不需要知道节点、地区、证书和 transport 的存在。
 
 ## 边界
 
 - 本仓库：控制面、管理端、router、node、协议、部署。
-- SU8：只保存一个代理地址，例如 `http://egress-router.egress.svc:3128`；
-  它不知道节点、地区、transport，也不参与本项目的发布。
-- 兼容面：标准 HTTP CONNECT 代理。SU8 已支持 `http` / `https` / `socks5` / `socks5h`；
-  首期用 `http://`（集群内）或 `https://`（公网）即可。
+- 消费者：只保存一个代理地址，例如 `http://egress-router-hk.egress.svc:3128`（集群内）
+  或 `https://hk-egress.example.com:443`（公网）；不参与本项目的发布。
+- 兼容面：标准 HTTP CONNECT 代理（`http` / `https` / `socks5` / `socks5h` 均可被消费端使用）。
 
 ## 组件
 
@@ -19,17 +19,17 @@
 | `web` | 控制面静态资源 | shadcn/ui 管理端：总览、线路、节点、地区、审计 |
 | `egress-router` | 集群内 | HTTP CONNECT 入口：拉线路配置、选健康节点、mTLS 到节点、故障摘除、指标 |
 | `egress-node` | 地区 VPS | HTTPS CONNECT 服务：mTLS、目标域名白名单、远端 DNS、健康/指标 |
-| SU8 gateway | 外部消费者 | 成员 `egress` 指向 router 或 node 的代理地址 |
+| 消费者 | 外部业务 | 把代理地址指向 router 或 node 即完成接入 |
 
 ## 数据流
 
 ```text
-gateway --HTTP CONNECT--> egress-router --HTTPS CONNECT (mTLS)--> egress-node --> API
+consumer --HTTP CONNECT--> egress-router --HTTPS CONNECT (mTLS)--> egress-node --> API
                                 │
                                 └── 拉配置 / 上报节点健康 ──> egress-control
 ```
 
-- router 对 gateway 是无 TLS 的集群内 HTTP 代理；由 NetworkPolicy 限制访问。
+- router 对消费者是无 TLS 的集群内 HTTP 代理；由 NetworkPolicy 限制访问。
 - router 到 node 是 TLS + mTLS，node 只接受持有客户端证书的 router。
 - API 的 TLS 是端到端的：node 只看到目标域名和加密字节，不终止 API TLS。
 - node 在本地区做 DNS 解析，不拿美国解析出来的 IP。
@@ -43,11 +43,11 @@ gateway --HTTP CONNECT--> egress-router --HTTPS CONNECT (mTLS)--> egress-node --
 任意 PostgreSQL 14+（本地、Docker 或托管实例均可）：
 
 ```bash
-psql -h 127.0.0.1 -U postgres -c "create role su8_egress login"
+psql -h 127.0.0.1 -U postgres -c "create role egress login"
 ```
 
 ```bash
-psql -h 127.0.0.1 -U postgres -c "create database su8_egress owner su8_egress"
+psql -h 127.0.0.1 -U postgres -c "create database egress owner egress"
 ```
 
 ### 2. 控制面
@@ -86,7 +86,7 @@ curl -x http://127.0.0.1:3128 -I https://example.com
 2. 在“线路”里把节点分配到线路。
 3. 在 VPS 上用 `deploy/node/config.control.toml` 启动节点（token 与 `EGRESS_INTERNAL_TOKEN` 一致）。
 4. router 用 `deploy/router/config.control.toml` 启动，配置从控制面拉取。
-5. SU8 把成员的 `egress_proxy_url` 填成 router 的地址。
+5. 消费者把代理地址填成 router 的地址（集群内 `http://egress-router-hk.egress.svc:3128`，或公网直连 `https://<node 域名>:443`）。
 
 ## 配置
 
@@ -120,9 +120,9 @@ cd web && bun install && bun run build
 镜像地址：
 
 ```text
-ghcr.io/auto-200/su8-egress-control
-ghcr.io/auto-200/su8-egress-router
-ghcr.io/auto-200/su8-egress-node
+ghcr.io/auto-200/egress-control
+ghcr.io/auto-200/egress-router
+ghcr.io/auto-200/egress-node
 ```
 
 K8s 清单与部署步骤见 `deploy/k8s/README.md`。工作流只负责构建和推送镜像；

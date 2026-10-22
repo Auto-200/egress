@@ -8,7 +8,7 @@ mkdir -p "$out"
 
 openssl req -x509 -newkey rsa:4096 -nodes -days 3650 \
   -keyout "$out/ca.key" -out "$out/ca.crt" \
-  -subj "/CN=su8-egress-dev-ca"
+  -subj "/CN=egress-dev-ca"
 
 openssl req -newkey rsa:2048 -nodes \
   -keyout "$out/node.key" -out "$out/node.csr" \
@@ -20,7 +20,7 @@ openssl x509 -req -in "$out/node.csr" \
 
 openssl req -newkey rsa:2048 -nodes \
   -keyout "$out/router.key" -out "$out/router.csr" \
-  -subj "/CN=su8-egress-router"
+  -subj "/CN=egress-router"
 openssl x509 -req -in "$out/router.csr" \
   -CA "$out/ca.crt" -CAkey "$out/ca.key" -CAcreateserial \
   -out "$out/router.crt" -days 3650 \

@@ -27,7 +27,7 @@ use tokio_rustls::TlsAcceptor;
 use tracing::{info, warn};
 
 #[derive(Debug, Parser)]
-#[command(name = "su8-egress-node")]
+#[command(name = "egress-node")]
 struct Args {
     #[arg(long, default_value = "config.toml")]
     config: PathBuf,
@@ -235,20 +235,17 @@ struct Metrics {
 impl Metrics {
     fn new() -> Result<Self> {
         let registry = Registry::new();
-        let active = IntGauge::new(
-            "su8_egress_node_active_connections",
-            "Active CONNECT tunnels",
-        )?;
+        let active = IntGauge::new("egress_node_active_connections", "Active CONNECT tunnels")?;
         let connects = IntCounterVec::new(
-            Opts::new("su8_egress_node_connect_total", "CONNECT attempts"),
+            Opts::new("egress_node_connect_total", "CONNECT attempts"),
             &["result"],
         )?;
         let upstream_seconds = Histogram::with_opts(prometheus::HistogramOpts::new(
-            "su8_egress_node_upstream_connect_seconds",
+            "egress_node_upstream_connect_seconds",
             "Upstream TCP connect time",
         ))?;
         let bytes = IntCounterVec::new(
-            Opts::new("su8_egress_node_bytes_total", "Bytes forwarded"),
+            Opts::new("egress_node_bytes_total", "Bytes forwarded"),
             &["direction"],
         )?;
         registry.register(Box::new(active.clone()))?;

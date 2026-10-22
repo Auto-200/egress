@@ -6,7 +6,7 @@ license.workspace = true
 publish.workspace = true
 
 [[bin]]
-name = "su8-egress-router"
+name = "egress-router"
 path = "src/main.rs"
 
 [dependencies]

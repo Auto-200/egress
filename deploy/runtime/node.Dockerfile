@@ -5,7 +5,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-COPY su8-egress-node /usr/local/bin/su8-egress-node
+COPY egress-node /usr/local/bin/egress-node
 
 EXPOSE 443
-ENTRYPOINT ["/usr/local/bin/su8-egress-node", "--config", "/etc/su8-egress/config.toml"]
+ENTRYPOINT ["/usr/local/bin/egress-node", "--config", "/etc/egress/config.toml"]

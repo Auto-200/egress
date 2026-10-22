@@ -3,7 +3,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: egress-router-tls
-  namespace: su8-egress
+  namespace: egress
 type: Opaque
 stringData:
   ca.crt: |
@@ -23,7 +23,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: egress-router-config
-  namespace: su8-egress
+  namespace: egress
 type: Opaque
 stringData:
   config.toml: |
@@ -32,12 +32,12 @@ stringData:
     connect_timeout_secs = 10
 
     [tls]
-    ca = "/etc/su8-egress/tls/ca.crt"
-    client_cert = "/etc/su8-egress/tls/router.crt"
-    client_key = "/etc/su8-egress/tls/router.key"
+    ca = "/etc/egress/tls/ca.crt"
+    client_cert = "/etc/egress/tls/router.crt"
+    client_key = "/etc/egress/tls/router.key"
 
     [control_plane]
-    url = "http://egress-control.su8-egress.svc:8088"
+    url = "http://egress-control.egress.svc:8088"
     token = "CHANGE_ME_INTERNAL_TOKEN_AT_LEAST_16_CHARS"
     poll_interval_secs = 5
 
@@ -50,7 +50,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: egress-router-hk
-  namespace: su8-egress
+  namespace: egress
 spec:
   replicas: 2
   selector:
@@ -65,16 +65,16 @@ spec:
     spec:
       containers:
         - name: router
-          image: ghcr.io/auto-200/su8-egress-router:latest
+          image: ghcr.io/auto-200/egress-router:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3128
           volumeMounts:
             - name: config
-              mountPath: /etc/su8-egress/config.toml
+              mountPath: /etc/egress/config.toml
               subPath: config.toml
             - name: tls
-              mountPath: /etc/su8-egress/tls
+              mountPath: /etc/egress/tls
               readOnly: true
           readinessProbe:
             httpGet:
@@ -107,7 +107,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: egress-router-hk
-  namespace: su8-egress
+  namespace: egress
 spec:
   selector:
     app.kubernetes.io/name: egress-router
@@ -121,7 +121,7 @@ apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
   name: egress-router-hk
-  namespace: su8-egress
+  namespace: egress
 spec:
   minAvailable: 1
   selector:
@@ -129,13 +129,13 @@ spec:
       app.kubernetes.io/name: egress-router
       egress.line: hk
 ---
-# Adjust the namespace/pod labels to match the SU8 gateway before applying.
-# If this policy does not match the gateway, the gateway will be blocked.
+# Adjust the namespace/pod labels to match your consumer pods before applying.
+# If this policy does not match them, the consumer will be blocked.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: egress-router-allow-consumers
-  namespace: su8-egress
+  namespace: egress
 spec:
   podSelector:
     matchLabels:
@@ -149,7 +149,7 @@ spec:
               kubernetes.io/metadata.name: default
           podSelector:
             matchLabels:
-              app.kubernetes.io/name: su8-gateway
+              app.kubernetes.io/name: my-consumer
       ports:
         - protocol: TCP
           port: 3128

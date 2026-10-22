@@ -1,5 +1,5 @@
 {
-  "name": "su8-egress-admin",
+  "name": "egress-admin",
   "private": true,
   "version": "0.1.0",
   "type": "module",

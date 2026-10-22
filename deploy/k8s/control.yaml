@@ -1,17 +1,17 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: su8-egress
+  name: egress
 ---
 # Replace every placeholder before applying. Do not commit real secrets.
 apiVersion: v1
 kind: Secret
 metadata:
   name: egress-control-secrets
-  namespace: su8-egress
+  namespace: egress
 type: Opaque
 stringData:
-  DATABASE_URL: postgres://su8_egress:CHANGE_ME@postgres.example.internal:5432/su8_egress
+  DATABASE_URL: postgres://egress:CHANGE_ME@postgres.example.internal:5432/egress
   EGRESS_ADMIN_PASSWORD: CHANGE_ME_ADMIN_PASSWORD
   EGRESS_INTERNAL_TOKEN: CHANGE_ME_INTERNAL_TOKEN_AT_LEAST_16_CHARS
 ---
@@ -19,7 +19,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: egress-control
-  namespace: su8-egress
+  namespace: egress
 spec:
   replicas: 1
   selector:
@@ -32,7 +32,7 @@ spec:
     spec:
       containers:
         - name: control
-          image: ghcr.io/auto-200/su8-egress-control:latest
+          image: ghcr.io/auto-200/egress-control:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8088
@@ -70,7 +70,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: egress-control
-  namespace: su8-egress
+  namespace: egress
 spec:
   selector:
     app.kubernetes.io/name: egress-control

@@ -6,6 +6,6 @@ RUN cargo build --release -p egress-node
 
 FROM debian:bookworm-slim
 RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
-COPY --from=build /app/target/release/su8-egress-node /usr/local/bin/su8-egress-node
+COPY --from=build /app/target/release/egress-node /usr/local/bin/egress-node
 EXPOSE 443
-ENTRYPOINT ["/usr/local/bin/su8-egress-node", "--config", "/etc/su8-egress/config.toml"]
+ENTRYPOINT ["/usr/local/bin/egress-node", "--config", "/etc/egress/config.toml"]

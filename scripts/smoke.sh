@@ -6,11 +6,11 @@ cd "$(dirname "$0")/.."
 ./scripts/gen-dev-certs.sh >/dev/null
 cargo build --workspace
 
-target/debug/su8-egress-node --config deploy/node/config.dev.toml \
-  >/tmp/su8-egress-node.log 2>&1 &
+target/debug/egress-node --config deploy/node/config.dev.toml \
+  >/tmp/egress-node.log 2>&1 &
 NODE_PID=$!
-target/debug/su8-egress-router --config deploy/router/config.dev.toml \
-  >/tmp/su8-egress-router.log 2>&1 &
+target/debug/egress-router --config deploy/router/config.dev.toml \
+  >/tmp/egress-router.log 2>&1 &
 ROUTER_PID=$!
 trap 'kill "$NODE_PID" "$ROUTER_PID" 2>/dev/null || true' EXIT
 

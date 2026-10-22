@@ -1,6 +1,6 @@
 //! Shared configuration and protocol types for the egress data plane.
 //!
-//! The data plane is deliberately independent of SU8: consumers only see a
+//! The data plane is deliberately independent of any business system: consumers only see a
 //! standard HTTP CONNECT proxy address.
 
 use serde::{Deserialize, Serialize};

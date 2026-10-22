@@ -43,7 +43,7 @@ export function LoginPage() {
             <Route className="h-5 w-5" />
           </div>
           <div>
-            <div className="text-lg font-semibold tracking-tight">SU8 Egress</div>
+            <div className="text-lg font-semibold tracking-tight">Egress</div>
             <div className="text-xs text-muted-foreground">Control Plane</div>
           </div>
         </div>
@@ -84,7 +84,7 @@ export function LoginPage() {
           </CardContent>
         </Card>
         <p className="mt-4 text-center text-xs text-muted-foreground">
-          独立控制面 · SU8 只通过标准代理地址接入
+          自托管多地区出口网络 · 标准代理地址接入
         </p>
       </div>
     </div>

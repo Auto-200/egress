@@ -2,7 +2,7 @@ name: release-images
 
 # 推 main 或 v* tag 时构建并推送三个镜像到 GHCR；全部跑在组织自建 runner 上。
 #
-# 编译策略与 SU8 发布一致：Rust 在 runner 宿主机上编译一次（持久 target +
+# 编译策略与既有 Rust 服务发布一致：Rust 在 runner 宿主机上编译一次（持久 target +
 # cargo 缓存），Docker 只负责组装运行时镜像（deploy/runtime/*.Dockerfile）。
 # 不在 Docker 层里分别编译三个镜像，避免三次全量依赖编译。
 # 兼容性红线：运行时镜像必须与 runner 同为 ubuntu 24.04（glibc 一致）。
@@ -36,7 +36,7 @@ jobs:
       - name: Cache Rust build
         uses: Swatinem/rust-cache@v2
         with:
-          shared-key: su8-egress-release
+          shared-key: egress-release
 
       - name: Install Bun
         uses: oven-sh/setup-bun@v2
@@ -58,9 +58,9 @@ jobs:
           set -euo pipefail
           rm -rf .runtime
           mkdir -p .runtime/web
-          cp target/release/su8-egress-control .runtime/
-          cp target/release/su8-egress-router .runtime/
-          cp target/release/su8-egress-node .runtime/
+          cp target/release/egress-control .runtime/
+          cp target/release/egress-router .runtime/
+          cp target/release/egress-node .runtime/
           cp -R web/dist/. .runtime/web/
 
       - name: Log in to GHCR
@@ -86,7 +86,7 @@ jobs:
           tags+=("sha-${short_sha}")
 
           for image in control router node; do
-            name="ghcr.io/${owner}/su8-egress-${image}"
+            name="ghcr.io/${owner}/egress-${image}"
             build_args=()
             for tag in "${tags[@]}"; do
               build_args+=(-t "${name}:${tag}")

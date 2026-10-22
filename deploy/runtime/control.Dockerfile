@@ -8,9 +8,9 @@ RUN apt-get update \
 
 WORKDIR /app
 COPY web ./web
-COPY su8-egress-control /usr/local/bin/su8-egress-control
+COPY egress-control /usr/local/bin/egress-control
 
 ENV EGRESS_WEB_DIR=/app/web/dist
 ENV EGRESS_BIND=0.0.0.0:8088
 EXPOSE 8088
-ENTRYPOINT ["/usr/local/bin/su8-egress-control"]
+ENTRYPOINT ["/usr/local/bin/egress-control"]
