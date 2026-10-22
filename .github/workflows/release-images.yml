@@ -1,7 +1,11 @@
 name: release-images
 
 # 推 main 或 v* tag 时构建并推送三个镜像到 GHCR；全部跑在组织自建 runner 上。
-# 单 runner 实例串行执行，避免并发构建争用 Docker 缓存。
+#
+# 编译策略与 SU8 发布一致：Rust 在 runner 宿主机上编译一次（持久 target +
+# cargo 缓存），Docker 只负责组装运行时镜像（deploy/runtime/*.Dockerfile）。
+# 不在 Docker 层里分别编译三个镜像，避免三次全量依赖编译。
+# 兼容性红线：运行时镜像必须与 runner 同为 ubuntu 24.04（glibc 一致）。
 on:
   push:
     branches:
@@ -21,10 +25,43 @@ concurrency:
 jobs:
   images:
     runs-on: [self-hosted, linux, x64, auto200]
-    timeout-minutes: 90
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: su8-egress-release
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Build web assets
+        working-directory: web
+        run: |
+          set -euo pipefail
+          bun install --frozen-lockfile
+          bun run build
+
+      - name: Build Rust binaries
+        run: cargo build --release --workspace
+
+      - name: Assemble runtime context
+        run: |
+          set -euo pipefail
+          rm -rf .runtime
+          mkdir -p .runtime/web
+          cp target/release/su8-egress-control .runtime/
+          cp target/release/su8-egress-router .runtime/
+          cp target/release/su8-egress-node .runtime/
+          cp -R web/dist/. .runtime/web/
 
       - name: Log in to GHCR
         env:
@@ -34,8 +71,6 @@ jobs:
           echo "${GITHUB_TOKEN}" | docker login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
 
       - name: Build and push
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           owner="$(printf '%s' "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')"
@@ -57,7 +92,7 @@ jobs:
               build_args+=(-t "${name}:${tag}")
             done
             echo "::group::build ${name}"
-            docker build -f "Dockerfile.${image}" "${build_args[@]}" .
+            docker build -f "deploy/runtime/${image}.Dockerfile" "${build_args[@]}" .runtime
             echo "::endgroup::"
             for tag in "${tags[@]}"; do
               docker push "${name}:${tag}"

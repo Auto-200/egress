@@ -110,6 +110,9 @@ cd web && bun install && bun run build
 - 推 `main`：构建并推送 `latest` 与 `sha-<12位>`。
 - 推 `v*` tag：额外推送该 tag。
 - 也可在 Actions 里手动 `workflow_dispatch`。
+- Rust 二进制在 runner 宿主机上编译一次，Docker 只组装运行时
+  （`deploy/runtime/*.Dockerfile`），运行时基础镜像固定 `ubuntu:24.04` 与 runner 对齐；
+  不采用 `Dockerfile.control/router/node` 在镜像内全量编译的路径。
 
 镜像地址：
 
