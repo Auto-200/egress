@@ -1,0 +1,23 @@
+[Unit]
+Description=SU8 egress node (HTTPS CONNECT, mTLS)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=su8-egress
+Group=su8-egress
+ExecStart=/usr/local/bin/su8-egress-node --config /etc/su8-egress/config.toml
+Restart=always
+RestartSec=2
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadOnlyPaths=/etc/su8-egress
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

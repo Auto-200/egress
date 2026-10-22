@@ -1,0 +1,31 @@
+[package]
+name = "egress-control"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "su8-egress-control"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+argon2 = "0.5"
+axum = { version = "0.8", features = ["json", "macros"] }
+chrono = { version = "0.4", features = ["serde"] }
+clap.workspace = true
+dotenvy = "0.15"
+egress-proto = { path = "../egress-proto" }
+hex = "0.4"
+rand = "0.8"
+serde.workspace = true
+serde_json = "1"
+sha2 = "0.10"
+sqlx = { version = "0.8", features = ["runtime-tokio-rustls", "postgres", "uuid", "chrono", "json", "migrate"] }
+thiserror.workspace = true
+tokio.workspace = true
+tower-http = { version = "0.6", features = ["fs", "trace"] }
+tracing.workspace = true
+tracing-subscriber.workspace = true
+uuid = { version = "1", features = ["v4", "serde"] }

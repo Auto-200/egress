@@ -1,0 +1,69 @@
+name: release-images
+
+# 推 main 或 v* tag 时构建并推送三个镜像到 GHCR；全部跑在组织自建 runner 上。
+# 单 runner 实例串行执行，避免并发构建争用 Docker 缓存。
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: release-images
+  cancel-in-progress: false
+
+jobs:
+  images:
+    runs-on: [self-hosted, linux, x64, auto200]
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Log in to GHCR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          echo "${GITHUB_TOKEN}" | docker login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
+
+      - name: Build and push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          owner="$(printf '%s' "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')"
+          short_sha="$(printf '%s' "${GITHUB_SHA}" | cut -c1-12)"
+          tags=()
+
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            tags+=("${GITHUB_REF_NAME}")
+            tags+=("latest")
+          elif [[ "${GITHUB_REF}" == "refs/heads/main" ]]; then
+            tags+=("latest")
+          fi
+          tags+=("sha-${short_sha}")
+
+          for image in control router node; do
+            name="ghcr.io/${owner}/su8-egress-${image}"
+            build_args=()
+            for tag in "${tags[@]}"; do
+              build_args+=(-t "${name}:${tag}")
+            done
+            echo "::group::build ${name}"
+            docker build -f "Dockerfile.${image}" "${build_args[@]}" .
+            echo "::endgroup::"
+            for tag in "${tags[@]}"; do
+              docker push "${name}:${tag}"
+            done
+          done
+
+      - name: Log out of GHCR
+        if: always()
+        run: docker logout ghcr.io || true

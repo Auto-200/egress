@@ -1,0 +1,28 @@
+listen = "0.0.0.0:3128"
+line = "hk"
+connect_timeout_secs = 10
+
+[tls]
+ca = "/etc/su8-egress/ca.crt"
+client_cert = "/etc/su8-egress/router.crt"
+client_key = "/etc/su8-egress/router.key"
+
+[health]
+interval_secs = 5
+failure_threshold = 3
+success_threshold = 1
+
+[[nodes]]
+name = "hk-1"
+endpoint = "hk1.egress.example.com:443"
+server_name = "hk1.egress.example.com"
+
+[[nodes]]
+name = "hk-2"
+endpoint = "hk2.egress.example.com:443"
+server_name = "hk2.egress.example.com"
+
+[[nodes]]
+name = "hk-3"
+endpoint = "hk3.egress.example.com:443"
+server_name = "hk3.egress.example.com"

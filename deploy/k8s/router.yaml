@@ -1,0 +1,155 @@
+# Replace every placeholder before applying. Do not commit real secrets.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: egress-router-tls
+  namespace: su8-egress
+type: Opaque
+stringData:
+  ca.crt: |
+    -----BEGIN CERTIFICATE-----
+    REPLACE_WITH_PROJECT_CA
+    -----END CERTIFICATE-----
+  router.crt: |
+    -----BEGIN CERTIFICATE-----
+    REPLACE_WITH_ROUTER_CLIENT_CERT
+    -----END CERTIFICATE-----
+  router.key: |
+    -----BEGIN PRIVATE KEY-----
+    REPLACE_WITH_ROUTER_CLIENT_KEY
+    -----END PRIVATE KEY-----
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: egress-router-config
+  namespace: su8-egress
+type: Opaque
+stringData:
+  config.toml: |
+    listen = "0.0.0.0:3128"
+    line = "hk"
+    connect_timeout_secs = 10
+
+    [tls]
+    ca = "/etc/su8-egress/tls/ca.crt"
+    client_cert = "/etc/su8-egress/tls/router.crt"
+    client_key = "/etc/su8-egress/tls/router.key"
+
+    [control_plane]
+    url = "http://egress-control.su8-egress.svc:8088"
+    token = "CHANGE_ME_INTERNAL_TOKEN_AT_LEAST_16_CHARS"
+    poll_interval_secs = 5
+
+    [health]
+    interval_secs = 5
+    failure_threshold = 3
+    success_threshold = 1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: egress-router-hk
+  namespace: su8-egress
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: egress-router
+      egress.line: hk
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: egress-router
+        egress.line: hk
+    spec:
+      containers:
+        - name: router
+          image: ghcr.io/auto-200/su8-egress-router:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3128
+          volumeMounts:
+            - name: config
+              mountPath: /etc/su8-egress/config.toml
+              subPath: config.toml
+            - name: tls
+              mountPath: /etc/su8-egress/tls
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 3128
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: 3128
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+      volumes:
+        - name: config
+          secret:
+            secretName: egress-router-config
+        - name: tls
+          secret:
+            secretName: egress-router-tls
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: egress-router-hk
+  namespace: su8-egress
+spec:
+  selector:
+    app.kubernetes.io/name: egress-router
+    egress.line: hk
+  ports:
+    - name: http
+      port: 3128
+      targetPort: 3128
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: egress-router-hk
+  namespace: su8-egress
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: egress-router
+      egress.line: hk
+---
+# Adjust the namespace/pod labels to match the SU8 gateway before applying.
+# If this policy does not match the gateway, the gateway will be blocked.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: egress-router-allow-consumers
+  namespace: su8-egress
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: egress-router
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: default
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: su8-gateway
+      ports:
+        - protocol: TCP
+          port: 3128

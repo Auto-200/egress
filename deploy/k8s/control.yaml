@@ -1,0 +1,80 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: su8-egress
+---
+# Replace every placeholder before applying. Do not commit real secrets.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: egress-control-secrets
+  namespace: su8-egress
+type: Opaque
+stringData:
+  DATABASE_URL: postgres://su8_egress:CHANGE_ME@postgres.example.internal:5432/su8_egress
+  EGRESS_ADMIN_PASSWORD: CHANGE_ME_ADMIN_PASSWORD
+  EGRESS_INTERNAL_TOKEN: CHANGE_ME_INTERNAL_TOKEN_AT_LEAST_16_CHARS
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: egress-control
+  namespace: su8-egress
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: egress-control
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: egress-control
+    spec:
+      containers:
+        - name: control
+          image: ghcr.io/auto-200/su8-egress-control:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8088
+          envFrom:
+            - secretRef:
+                name: egress-control-secrets
+          env:
+            - name: EGRESS_BIND
+              value: 0.0.0.0:8088
+            - name: EGRESS_COOKIE_SECURE
+              value: "1"
+            - name: EGRESS_WEB_DIR
+              value: /app/web/dist
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8088
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8088
+            initialDelaySeconds: 15
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: egress-control
+  namespace: su8-egress
+spec:
+  selector:
+    app.kubernetes.io/name: egress-control
+  ports:
+    - name: http
+      port: 8088
+      targetPort: 8088

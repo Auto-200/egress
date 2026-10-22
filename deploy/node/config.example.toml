@@ -1,0 +1,14 @@
+listen = "0.0.0.0:443"
+connect_timeout_secs = 10
+
+[tls]
+cert = "/etc/su8-egress/node.crt"
+key = "/etc/su8-egress/node.key"
+client_ca = "/etc/su8-egress/ca.crt"
+
+[acl]
+# Exact host:port, or a wildcard subdomain: "*.volces.com:443".
+# Keep this list as small as possible.
+allow = [
+  "ark.cn-beijing.volces.com:443",
+]

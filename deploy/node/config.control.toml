@@ -1,0 +1,20 @@
+listen = "0.0.0.0:443"
+connect_timeout_secs = 10
+
+[tls]
+cert = "/etc/su8-egress/node.crt"
+key = "/etc/su8-egress/node.key"
+client_ca = "/etc/su8-egress/ca.crt"
+
+[control_plane]
+url = "http://egress-control.egress.svc:8088"
+token = "replace-with-EGRESS_INTERNAL_TOKEN"
+node = "hk-1"
+poll_interval_secs = 10
+
+# ACL is fetched from the control plane at startup. If the control plane is
+# unreachable or the node is missing, the node starts with an empty ACL and
+# rejects every target (fail closed). After startup it keeps the last
+# successfully fetched ACL if the control plane goes away.
+[acl]
+allow = []

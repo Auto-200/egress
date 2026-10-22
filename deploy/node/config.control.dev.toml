@@ -1,0 +1,16 @@
+listen = "127.0.0.1:8443"
+connect_timeout_secs = 10
+
+[tls]
+cert = "certs/node.crt"
+key = "certs/node.key"
+client_ca = "certs/ca.crt"
+
+[control_plane]
+url = "http://127.0.0.1:8088"
+token = "dev-internal-token-123456"
+node = "hk-test"
+poll_interval_secs = 2
+
+[acl]
+allow = []

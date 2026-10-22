@@ -1,0 +1,22 @@
+listen = "0.0.0.0:3128"
+line = "hk"
+connect_timeout_secs = 10
+
+[tls]
+ca = "/etc/su8-egress/ca.crt"
+client_cert = "/etc/su8-egress/router.crt"
+client_key = "/etc/su8-egress/router.key"
+
+[control_plane]
+url = "http://egress-control.egress.svc:8088"
+token = "replace-with-EGRESS_INTERNAL_TOKEN"
+poll_interval_secs = 5
+
+[health]
+interval_secs = 5
+failure_threshold = 3
+success_threshold = 1
+
+# In control-plane mode the node list comes from the control plane.
+# If the control plane reports the line missing/disabled, the router clears
+# its node pool and fails closed instead of serving stale nodes.

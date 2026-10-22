@@ -1,0 +1,7 @@
+/target
+/certs
+/web/node_modules
+/web/dist
+*.log
+.env
+.DS_Store
