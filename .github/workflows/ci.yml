@@ -13,8 +13,10 @@ concurrency:
 
 jobs:
   rust:
-    # 组织自建 runner（Auto-200 / ci-01-auto200）；单实例串行，不消耗托管分钟数。
-    runs-on: [self-hosted, linux, x64, auto200]
+    # 公开仓库安全红线：fork PR 一律跑托管 runner（公开仓库免费），绝不进自建；
+    # 同仓库分支的 PR 已由 push 事件覆盖，这里跳过避免重复。
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ${{ github.event_name == 'pull_request' && 'ubuntu-24.04' || fromJSON('["self-hosted", "linux", "x64", "auto200"]') }}
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
@@ -29,7 +31,8 @@ jobs:
       - run: cargo test --workspace
 
   web:
-    runs-on: [self-hosted, linux, x64, auto200]
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ${{ github.event_name == 'pull_request' && 'ubuntu-24.04' || fromJSON('["self-hosted", "linux", "x64", "auto200"]') }}
     timeout-minutes: 15
     defaults:
       run:
