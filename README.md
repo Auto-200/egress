@@ -40,11 +40,14 @@ gateway --HTTP CONNECT--> egress-router --HTTPS CONNECT (mTLS)--> egress-node --
 
 ### 1. 数据库
 
-使用公共开发栈的 PostgreSQL（一项目一角色一库）：
+任意 PostgreSQL 14+（本地、Docker 或托管实例均可）：
 
 ```bash
-createuser -h 127.0.0.1 -U night su8_egress
-createdb -h 127.0.0.1 -U night -O su8_egress su8_egress
+psql -h 127.0.0.1 -U postgres -c "create role su8_egress login"
+```
+
+```bash
+psql -h 127.0.0.1 -U postgres -c "create database su8_egress owner su8_egress"
 ```
 
 ### 2. 控制面
@@ -134,3 +137,7 @@ K8s 清单与部署步骤见 `deploy/k8s/README.md`。工作流只负责构建�
 配置版本回滚、多实例控制面/高可用、控制面 API 的集成测试。
 
 没有静默回落直连；线路不可用时由 router 返回 5xx，由上层决定是否切号。
+
+## License
+
+Apache-2.0，见 [LICENSE](LICENSE)。
