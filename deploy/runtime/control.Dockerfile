@@ -7,7 +7,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-COPY web ./web
+COPY web ./web/dist
 COPY egress-control /usr/local/bin/egress-control
 
 ENV EGRESS_WEB_DIR=/app/web/dist
